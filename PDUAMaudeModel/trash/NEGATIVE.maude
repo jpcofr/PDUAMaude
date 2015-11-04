@@ -1,0 +1,31 @@
+*** Negative flag functional module
+
+fmod NEGATIVE is
+	
+	protecting FLAG .
+	
+	sort Negative .
+	
+	subsort Flag < Negative .
+	
+*** Initial constructor
+	op negative : Flag -> Negative .
+	
+	*** Declarations
+	var F : Flag .
+	
+	*** turnOnNegative
+	*** Turns on this flag.
+		*** Signature
+		op turnOnNegative : Negative -> Negative .
+		*** Equations 
+		eq turnOnNegative(F) = negative(turnOn(F)) .
+
+		
+	*** turnOffNegative
+	*** Turns off this flag.
+		*** Signature
+		op turnOffNegative : Negative -> Negative .
+		*** Equations 
+		eq turnOffNegative(F) = negative(turnOff(F)) . 
+endfm	

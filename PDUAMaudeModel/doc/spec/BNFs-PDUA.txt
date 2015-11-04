@@ -1,0 +1,308 @@
+Estructura de las microinstrucciones del PDUA
+Proyecto de grado
+Juan Pablo Contreras Franco
+26 de diciembre de 2008
+________________________________________________________________________________
+
+0. Introducción
+
+Notar que las reglas explicitas dentro del modelo MAUDE engloban implicitamente 
+transiciones de los estados de la máquina que se esta emulando. Se esta 
+entonces emulando el hardware haciendo manifiestos los estados que sus 
+componentes podrían tomar en el transcurso de una ejecución normal del 
+dispositivo.
+ 
+El punto es que los microprogramas son el conjunto de las reglas de transición,
+y por ende lo que se esta especificando es es una representación sintáctica del
+estado de la maquina, pero el hecho mismo de las transiciones esta dando a 
+conocer como es el comportamiento dado en la especificación VHDL.
+
+1. Elementos que componen el PDUA
+
+El PDUA tiene elementos que deben ser explicitamente expresados para que el 
+interpretador de maude haga posible la ejecución de todas las reglas de la 
+manera mas fiel al sistema que se desea especificar. De este modo, se deben 
+especificar los simbolos internos que componen la cadena inicial.
+
+1.1 Componentes identificados del PDUA
+
+Los componentes identificados hasta el momento son:
+
+* ALU: La ALU contiene un registro con el estado actual de las banderas, 
+contiene también la operación que esta siendo ejecutada, y es necesario que 
+tenga el estado del resultado para que pueda emular el estado del bus 
+(de datos) C. Los operandos son tomados de otras partes de la cadena y son 
+interpretados usando las reglas de interpretación.
+
+Los símbolos que la ALU entonces debe tener son:
+
+i	Representa la operación de proyección o identidad.
+! 	Representa la operación de negación bit a bit.
+&	Representa la operación de conjunción bit a bit.
+|	Representa la operación de disyunción bit a bit.
+#	Representa la operación de disyunción exclusiva bit a bit.
++	Representa la adición bit a bit.
+. 	Representa el incremento.
+%	Representa la operación de complemento.
+
+=	No hay corrimiento.
+<	Corrimiento de un bit a la derecha.
+>	Corrimiento de un bit a la izquierda.
+
+Los otros simbolos que deben estar plasmados en esta cadena son los del 
+registro de resultado y el habilitador de banderas.
+
+* MAR: El MAR dentro de la cadena es solamente un registro. Tiene un 
+habilitador que es el que permite que tome el valor existente del bus de estado.
+
+* Banco de registros: El banco de registros debe tener indicado explicitamente 
+cada uno de sus componentes.
+
+Los componentes del banco de registros son:
+
+PC		Program counter
+SP		Stack pointer
+DPTR 	Data pointer
+A		Registro para operaciones
+VI		Registro que mantiene el apuntador a la rutina de manejo de excepciones
+TEMP	Registro temporal
+CTE-1	Registro constante con el número 255-1
+ACC		Acumulador
+HR		El habilitador de registros
+
+Adicional a estos componentes no hay algún otro que deba ser representado 
+dentro del banco de registros.
+
+* MDR: Esta unidad tiene la responsabilidad de la comunicación desde la ALU a 
+la memoria o a otros periféricos y hacia el banco de registros. Baste saber en 
+este momento que contiene lo siguiente:
+
+RW		Modo de acceso (lectura o escritura)
+disp	Dispositivo activado (puede ser o el bus de datos C, que activaría el 
+		banco junto con el MAR para propósitos de proceso interno o la memoria 
+		o genericamente cualquier dispositivo externo que sea direccionable por 
+		la máquina.)
+
+* Unidad de control
+La unidad de control tiene lo siguiente:
+
+insH	Los 5 bits mas altos de la instrucción
+uPC		Los 3 bits mas bajos de la instrucción
+RST		Señal de reset
+JEV		Evaluador de saltos
+RW		Modo de lectura/escritura
+IOM		Activa lectura o escritura de la memoria
+RST 	Reset
+INT		Interrupcion
+
+2. BNF del PDUA
+
+Una vez dados los simbolos anteriores, y teniendo en cuenta que el interpretador
+MAUDE posee como reservados los caracteres '{', '}', '(', ')', '[' y ']', 
+procedo a exponer como deben ser las cadenas de las reglas escritas en BNF:
+
+(nota: "siguiente linea" se traduce a espacio sencillo)
+
+<bit> ::= '0' | '1'
+<uPCnum> ::= 'ui0' | 'ui1' | 'ui2' | '3' | '4' | '5' | '6' | '7'
+
+<output> ::= 'OUTPUT'
+<selop> ::= 'SELOP'
+<hab> ::= 'HABILITADO'
+
+<rst> := 'RESET'
+<iom> := 'IOM'
+<rw> ::= 'RW'
+
+<z> ::= 'Z'
+<p> ::= 'P'
+<n> ::= 'N'
+<c> ::= 'C'
+<hr> ::= 'HR'
+<hf> ::= 'HF'
+<pc> ::= 'PC'
+<sp> ::= 'SP'
+<desp> ::= 'DESP'
+<dptr> ::= 'DPTR'
+<a> ::= 'A'
+<vi> ::= 'VI'
+<temp> ::= 'TEMP'
+<cte-1> ::= 'CTE-1'
+
+<acc> ::= 'ACC'
+<mara> ::= 'MAR'
+<uins> ::= 'UINS'
+<operando> ::= 'OPERANDO'
+<oper> ::= 'OPERACION'
+<destino> ::= 'DESTINO'
+<cond> ::= 'CONDICION'
+<sigIns> ::= 'SIGINST'
+<uPC> ::= 'UPC'
+<insH> ::= 'INSH'
+<jev> ::= 'JEV'
+<inter>::= 'INTERRUPCION'
+<datain> ::= 'DATAIN'
+<dataout> ::= 'DATAOUT'
+<direccion> ::= 'DIRECCION'
+
+<condicion> ::= '!J' | 'JU' | 'JZ' | 'JN' | 'JC' | 'JP' | 'JI'		   
+<operacion> ::= 'i' | '!' | '&' | '|' | '#' | '+' | '.' | '%'
+<corrimiento> ::= 'IZ' | 'DE' | 'NO'
+<registros> ::= <pc> | <sp> | <dptr> | <a> | <vi> | <temp> | <cte-1> | <acc>
+<reg> ::= 'reg('<mapa>')'
+<mapa> ::= 'empty' | 'insert('<digito>','<bit>','<reg>')'
+
+<uInstruccion> ::= <uins>':'<uPCnum> 
+           		   <operando>':'<registro> 
+                   <oper>':'<operacion> 
+		           <destino>':'<registro> 
+		           <cond>':'<condicion> 
+		           <sigInst>':'<uPCnum> 
+		           <desp>':'<corrimiento> 
+		           <hf>':'<bit> 
+		           <hr>':'<bit> 
+		           <mara>':'<bit> 
+		           <mdr>':'<bit> 
+		           <rw>':'<bit> 
+		           <iom>':'<bit> 
+		           <hri>':'<bit> 
+		           <rupc>':'<bit>
+		      
+<banco> ::= <hr>':'<bit> 
+			<pc>':'<reg> 
+			<sp>':'<reg> 
+			<dptr>':'<reg>
+			<a>':'<reg> 
+			<vi>':'<reg> 
+			<temp>':'<reg> 
+			<cte-1>':'<reg> 
+			<acc>':'<reg>
+
+<alu> ::= <hf>':'<bit> 
+		  <selop>':'<operacion> 
+		  <c>':'<bit> 
+		  <n>':'<bit> 
+		  <p>':'<bit> 
+		  <z>':'<bit> 
+		  <output>':'<reg>
+ 			
+<mdr> ::= <hab>':'<bit> 
+  		  <datain>':'<reg> 
+  		  <dataout>':'<reg>           
+            
+<mar> ::= <hab>':'<bit>
+ 		  <direccion>':'<reg> 
+
+<uc> ::= <insH>':'<reg>  
+		 <uPC>':'<uPCNum>   
+		 <rst>':'<bit> 
+		 <iom>':'<bit> 
+		 <rw>':'<bit>          
+		 <inter>':'<bit>              
+		 <jev>':'(<p>|<c>|<z>|<n>)
+		 
+<pdua> ::='*'<uInstruccion>'*-*'<uc>'!'<alu>'!'<banco>'!'<mar>'!'<mdr>'*'  
+
+
+
+
+
+
+
+
+
+
+Especificación para objetos MAUDE:
+
+
+
+<constPDUA> ::= 'Pdua'
+<pdua> ::= '< 'K':' <constPDUA> '|' <uInstruccion>',' <uc>','<alu>','<banco>','<mar>','<mdr>' >'
+
+<uc>	 		::= 'uc : ' 
+		    		'[' <insH>     	'?' <reg>      	     	']'  
+		    		'[' <uPC>      	'?' <uPCNum>	     	']'   
+		    		'[' <rst>      	'?' <bit>             	']' 
+		    		'[' <iom>      	'?' <bit>             	']'
+		    		'[' <rw>       	'?' <bit>             	']'          
+		    		'[' <inter>    	'?' <bit>             	']'              
+		    		'[' <jev>      	'?' [<p>|<c>|<z>|<n>]	']'
+		       
+<alu>   		::= 'alu : ' 
+			    	'[' <hf>       	'?' <bit>        	 	']' 
+			    	'[' <selop>    	'?' <operacion>	     	']' 
+			    	'[' <c>        	'?' <bit>          	 	']' 
+			    	'[' <n>        	'?' <bit>          	 	']' 
+			    	'[' <p>        	'?' <bit>            	']' 
+			    	'[' <z>        	'?' <bit>         	 	']' 
+			    	'[' <output>   	'?' <reg>     		 	']'		 
+
+<banco>         ::= 'banco : '
+			        '[' <hr>       	'?' <bit>   			']' 
+			        '[' <pc>       	'?' <reg>             	']' 
+			        '[' <sp>       	'?' <reg>   			']' 
+			        '[' <dptr>     	'?' <reg>             	']'
+			        '[' <a>        	'?' <reg>             	']' 
+			        '[' <vi>       	'?' <reg>             	']'
+			        '[' <temp>     	'?' <reg>             	']' 
+			        '[' <cte-1>    	'?' <reg>             	']' 
+			        '[' <acc>		'?' <reg>             	']'
+			
+<mar>          	::= 'mar : '
+			       	'[' <hab>       '?' <bit>            	']'
+ 		           	'[' <direccion>	'?' <reg>             	']' 	
+
+<mdr>          	::= 'mdr : '
+		           	'[' <hab>      	'?' <bit>    		 	']' 
+  		           	'[' <datain>   	'?' <reg>             	']' 
+  		           	'[' <dataout>  	'?' <reg>             	']'    	
+  		   	 
+<uInstruccion>	::=	'uins : '
+            		'[' <uins>     	'?'	<uPCnum>          	']'
+                	'[' <operando> 	'?'	<registro> 			']'
+                   	'[' <oper>     	'?'	<operacion>    		']'
+				   	'[' <destino>  	'?'	<registro>     		']'
+				   	'[' <cond>     	'?'	<condicion>   		']'
+				   	'[' <sigInst>  	'?'	<uPCnum>   			']'
+                   	'[' <desp>     	'?'	<corrimiento>  		']'
+                   	'[' <hf>       	'?'	<bit>  				']'
+                   	'[' <hr>       	'?'	<bit>   			']'
+                   	'[' <mara>     	'?'	<bit> 				']'
+                   	'[' <mdr>      	'?'	<bit>				']'
+                   	'[' <rw>       	'?'	<bit> 				']'
+				   	'[' <iom>      	'?'	<bit>       		']'
+				   	'[' <hri>      	'?'	<bit>				']'
+				   	'[' <rupc>     	'?'	<bit>				']'
+ 
+ 
+3. BNF de los mensajes del PDUA con los periféricos
+
+<reg>'_'<bit>'_'<bit>'_'<bit>'_'<reg>'_'<reg>
+
+Posicionalmente estos mensajes son interpretados de la siguiente manera:
+
+Posición 1: MAR
+Posición 2: INT			(Interrupción) 
+Posición 3: RW 			(Modo lectura/escritura)
+Posición 4: IOM 		(Modo periférico/memoria)
+Posición 5: DATA_IN
+Posición 6:	DATA_OUT
+                    
+                    
+                    
+                    
+		          
+		        
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,11 @@
+*** Condition functional module 
+
+fmod JUMP is
+
+	sort Jump .
+	
+*** Initial constructors
+
+	ops !J JU JZ JN JC JP JI : -> Jump [ctor] .
+
+endfm 

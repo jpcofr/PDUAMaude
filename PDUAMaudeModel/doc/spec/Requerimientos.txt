@@ -1,0 +1,14 @@
+* REQUERIMIENTOS FUNCIONALES
+
+	RF1: Ejecutar programas escritos con las instrucciones de la API del PDUA.
+
+	RF2: Conocer el estado de una computación de la máquina en un instante dado.
+
+	RF3: Ejecutar un programa instrucción a instrucción (debug).
+
+	RF4: Conocer el estado de la memoria en un momento dado.
+
+	RF5: Generar microinstrucciones con el formato de las reglas de los 
+		 microprogramas.
+ 
+	RF6: Modificar el estado de la memoria.

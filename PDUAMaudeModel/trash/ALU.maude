@@ -1,0 +1,132 @@
+*** ALU functional module 
+
+fmod ALU is
+	protecting OPERAND .
+	protecting RESULT .
+	protecting CARRY .
+	protecting NEGATIVE .
+	protecting ZERO .
+	protecting PARITY .
+	protecting SELOPER .	
+
+	sort Alu .
+	
+	subsorts Operand Result Carry Zero Parity Negative Seloper < Alu .
+	
+	*** Initial constructor
+  	op alu : Operand Operand Result Carry Zero Parity Negative Seloper -> 
+  	Alu [ctor] .
+  	
+  	*** Declarations
+  	vars A B  : Operand .
+  	var R : Result .
+  	var c : Carry .
+  	var z : Zero .
+  	var n : Negative .
+  	var p : Parity .
+  	var so : Seloper .
+  	
+  	*** and 
+	*** Logical "and" between every bit in the same position of both operands.
+		*** Signature
+  		op and : Alu -> Alu .
+		*** Equations
+	  	eq and(alu(A,B,R,C,Z,N,P,so)) = alu(A,B,R,C,Z,N,P,&) .
+  	
+  	*** or
+  	*** Logical "or" between every bit in the same position of both operands.
+		*** Signature
+  		op or : Alu -> Alu .
+		*** Equations
+	  	eq or(alu(A,B,R,c,z,n,p,so)) = alu(A,B,R,C,Z,N,P,|) .
+  		
+  	*** not
+  	*** Logical "not" in every bit of an operand.
+		*** Signature
+  		op not : Alu -> Alu .
+		*** Equations
+	  	eq not(alu(A,B,R,c,z,n,p,so)) = alu(A,B,R,C,Z,N,P,!) . 
+  	
+  	*** xor
+  	*** Logical "xor" between every bit in the same position of both operands.
+		*** Signature
+  		op xor : Alu -> Alu .
+		*** Equations
+	  	eq xor(alu(A,B,R,c,z,n,p,so)) = alu(A,B,R,C,Z,N,P,x-|) .
+  	
+  	*** add
+  	*** Binary addition between two operands.
+		*** Signature
+  		op add : Alu -> Alu .
+		*** Equations
+	  	eq add(alu(A,B,R,C,Z,N,P,so)) = alu(A,B,R,C,Z,N,p,+) .
+  		
+  	*** complement
+  	*** Complement operation on one operand.
+		*** Signature
+  		op complement : Alu -> Alu .
+		*** Equations
+	  	eq complement(alu(A,B,R,C,Z,N,P,so)) = alu(A,B,R,C,Z,N,P,!+1) .
+  		
+  	*** increment
+  	*** Increment operation on one operand.
+		*** Signature
+  		op increment : Alu -> Alu .
+		*** Equations
+  	
+  	*** projection
+  	*** Maps the bits of one operator over the result register bits.
+		*** Signature
+  		op projection : Alu -> Alu .
+		*** Equations
+	  	eq projection(alu(A,B,R,C,Z,N,P,so)) = alu(A,B,R,C,Z,N,P,id) .
+  	
+  	*** shiftl
+  	*** Shifts the output one bit to the left.
+		*** Signature
+  		op shiftl : Alu -> Alu .
+		*** Equations
+  		eq shiftr(alu(A,B,R,C,Z,N,P,so)) = alu(A,B,R,C,Z,N,P,shl) .
+  		
+  	*** shiftr
+  	*** Shifts the output one bit to the right.
+		*** Signature
+  		op shiftr : Alu -> Alu .
+		*** Equations
+	  	eq shiftr(alu(A,B,R,C,Z,N,P,so)) = alu(A,B,R,C,Z,N,P,shr) .
+  		
+  	*** tick	
+  	*** Clock tick. Executes the actual operation.
+		*** Signature
+  		op tick : Alu -> Alu .
+		*** Equations	
+	  	eq tick(alu(A,B,R,C,Z,N,P,&)) = 
+	  	   alu(A,B,andreg(A,B),C,andzero(A,B),andpar(A,B),andnegat(A,B),&) .
+	  	     
+  		eq tick(alu(A,B,R,C,Z,N,P,|)) = 
+	  	   alu(A,B,orreg(A,B),C,orzero(A,B),orpar(A,B),ornegat(A,B),|) .
+	  	
+	  	eq tick(alu(A,B,R,C,Z,N,P,!)) = 
+	  	   alu(A,B,notreg(B),C,notzero(B),notpar(B),notnegat(B),!) .
+	  	
+	  	eq tick(alu(A,B,R,C,Z,N,P,x-|)) = 
+	  	   alu(A,B,xorreg(B),C,xorzero(B),xorpar(B),xornegat(B),x-|) .
+	  	
+	  	eq tick(alu(A,B,R,C,Z,N,P,id)) = 
+	  	   alu(A,B,idreg(B),C,idzero(B),idpar(B),idnegat(B),id) .
+	  	   
+		eq tick(alu(A,B,R,C,Z,N,P,shl)) = 
+	  	   alu(A,B,shlreg(B),C,shlzero(B),shlpar(B),shlnegat(B),shl) .
+	  	   
+	  	eq tick(alu(A,B,R,C,Z,N,P,shl)) = 
+	  	   alu(A,B,shrreg(B),C,shrzero(B),shrpar(B),shrnegat(B),shr) .	  	
+  		
+  		eq tick(alu(A,B,R,C,Z,N,P,+)) = 
+	  	   alu(A,B,addreg(A,B,C),addcar(A,B,C),addzero(A,B,C),addpar(A,B,C),addnegat(A,B,C)
+	  	   ,+) .
+  		
+  	
+  	
+  	
+  	 
+ endfm

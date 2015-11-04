@@ -1,0 +1,1058 @@
+***(
+
+    This file is part of the Maude 2 interpreter.
+
+    Copyright 2004-2006 SRI International, Menlo Park, CA 94025, USA.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+
+)
+
+***
+***	Maude internet socket external objects.
+***	Version 2.3.
+***
+
+mod SOCKET is
+  protecting STRING .
+  including CONFIGURATION .
+
+  op socket : Nat -> Oid [ctor] .
+
+  op createClientTcpSocket : Oid Oid String Nat -> Msg [ctor msg format (b o)] .
+  op createServerTcpSocket : Oid Oid Nat Nat -> Msg [ctor msg format (b o)] .
+  op createdSocket : Oid Oid Oid -> Msg [ctor msg format (m o)] .
+
+  op acceptClient : Oid Oid -> Msg [ctor msg format (b o)] .
+  op acceptedClient : Oid Oid String Oid -> Msg [ctor msg format (m o)] .
+
+  op send : Oid Oid String -> Msg [ctor msg format (b o)] .
+  op sent : Oid Oid -> Msg [ctor msg format (m o)] .
+
+  op receive : Oid Oid -> Msg [ctor msg format (b o)] .
+  op received : Oid Oid String -> Msg [ctor msg format (m o)] .
+
+  op closeSocket : Oid Oid -> Msg [ctor msg format (b o)] .
+  op closedSocket : Oid Oid String -> Msg [ctor msg format (m o)] .
+
+  op socketError : Oid Oid String -> Msg [ctor msg format (r o)] .
+
+  op socketManager : -> Oid
+        [special (
+           id-hook SocketManagerSymbol
+	   op-hook succSymbol			(s_ : Nat ~> NzNat)
+	   op-hook stringSymbol			(<Strings> : ~> String)
+	   op-hook socketOidSymbol		(socket : Nat ~> Oid)
+	   op-hook createClientTcpSocketMsg	(createClientTcpSocket : Oid Oid String Nat ~> Msg)
+	   op-hook createServerTcpSocketMsg	(createServerTcpSocket : Oid Oid Nat Nat ~> Msg)
+	   op-hook createdSocketMsg		(createdSocket : Oid Oid Oid ~> Msg)
+	   op-hook acceptClientMsg		(acceptClient : Oid Oid ~> Msg)
+	   op-hook acceptedClientMsg		(acceptedClient : Oid Oid String Oid ~> Msg)
+	   op-hook sendMsg			(send : Oid Oid String ~> Msg)
+	   op-hook sentMsg			(sent : Oid Oid ~> Msg)
+	   op-hook receiveMsg			(receive : Oid Oid ~> Msg)
+	   op-hook receivedMsg			(received : Oid Oid String ~> Msg)
+	   op-hook closeSocketMsg		(closeSocket : Oid Oid ~> Msg)
+	   op-hook closedSocketMsg		(closedSocket : Oid Oid String ~> Msg)
+	   op-hook socketErrorMsg		(socketError : Oid Oid String ~> Msg))] .
+endm
+
+  ---- from the book All About Maude
+  ---- from the Maude Manual
+  ---- by the Maude team
+  
+  load socket.maude
+  
+mod BUFFERED-SOCKET is
+  pr NAT .
+  inc SOCKET .
+
+------------------------------------------------------------------------------------
+----  class BufferedSocket |      *** One on each extreme of the socket
+----     read : String,           *** Messages read
+----     bState : BState .        *** Either idle or active
+
+  op BufferedSocket : -> Cid [ctor] .
+
+  op read :_ : String -> Attribute [ctor gather(&)] . 
+  op bState :_ : BState -> Attribute [ctor gather(&)] . 
+
+------------------------------------------------------------------------------------
+
+  op b : Oid -> Oid .   *** buffered sockets ids are marked with a b operator,
+                        *** i.e., the buffers associated to a socket SOCKET                         *** have identifier b(SOCKET); note that there is a 
+                        *** BufferedSocket on each side of the socket, that is,
+                        *** there are two objects with the same id, but in different
+                        *** configurations.
+    
+  sort BState .
+  ops idle active : -> BState [ctor] .
+    
+  op CreateClientTcpSocket : Oid Oid String Nat -> Msg [ctor msg format (b o)] .
+  op CreateServerTcpSocket : Oid Oid Nat Nat -> Msg [ctor msg format (b o)] .
+  op CreatedSocket : Oid Oid Oid -> Msg [ctor msg format (m o)] .
+
+  op AcceptClient : Oid Oid -> Msg [ctor msg format (b o)] .
+  op AcceptedClient : Oid Oid String Oid -> Msg [ctor msg format (m o)] .
+
+  op Send : Oid Oid String -> Msg [ctor msg format (b o)] .
+  op Sent : Oid Oid -> Msg [ctor msg format (m o)] .
+
+  op Receive : Oid Oid -> Msg [ctor msg format (b o)] .
+  op Received : Oid Oid String -> Msg [ctor msg format (m o)] .
+
+  op CloseSocket : Oid Oid -> Msg [ctor msg format (b o)] .
+  op ClosedSocket : Oid Oid String -> Msg [ctor msg format (m o)] .
+
+  op SocketError : Oid Oid String -> Msg [ctor msg format (r o)] .
+
+  vars SOCKET NEW-SOCKET SOCKET-MANAGER O : Oid .
+  vars ADDRESS IP IP' DATA S S' REASON : String .
+  var  Atts : AttributeSet .
+  vars PORT BACKLOG N : Nat .
+
+  rl [createServerTcpSocket] :
+    CreateServerTcpSocket(SOCKET-MANAGER, O, PORT, BACKLOG)
+    => createServerTcpSocket(SOCKET-MANAGER, O, PORT, BACKLOG) .
+
+  rl [acceptClient] :
+    AcceptClient(b(SOCKET), O)
+    => acceptClient(SOCKET, O) .
+
+  rl [acceptedClient] :
+    acceptedClient(O, SOCKET, IP', NEW-SOCKET) 
+    => AcceptedClient(O, b(SOCKET), IP', b(NEW-SOCKET)) 
+       < b(NEW-SOCKET) : BufferedSocket | bState : idle, read : "" > .
+       
+  rl [socketError] :
+    socketError(O, SOCKET-MANAGER, REASON)
+    => SocketError(O, SOCKET-MANAGER, REASON) .
+       
+  rl [closeSocket] :
+    CloseSocket(b(SOCKET), SOCKET-MANAGER)
+    => closeSocket(SOCKET, SOCKET-MANAGER) .
+
+  rl [closedSocket] :
+    < b(SOCKET) : BufferedSocket | Atts >
+    closedSocket(SOCKET, SOCKET-MANAGER, DATA)
+    => ClosedSocket(b(SOCKET), SOCKET-MANAGER, DATA) .
+
+  rl [createClientTcpSocket] :
+    CreateClientTcpSocket(SOCKET-MANAGER, O, ADDRESS, PORT)
+    => createClientTcpSocket(SOCKET-MANAGER, O, ADDRESS, PORT) .
+
+  rl [createdSocket] :
+    createdSocket(O, SOCKET-MANAGER, SOCKET) 
+    => < b(SOCKET) : BufferedSocket | bState : idle, read : "" > 
+       CreatedSocket(O, SOCKET-MANAGER, b(SOCKET)) .
+
+  rl [send] : 
+    < b(SOCKET) : BufferedSocket | bState : active, Atts > 
+    Send(b(SOCKET), O, DATA)
+    => < b(SOCKET) : BufferedSocket | bState : active, Atts >
+       send(SOCKET, O, DATA + "#") .
+
+  rl [sent] : 
+    < b(SOCKET) : BufferedSocket | bState : active, Atts > 
+    sent(O, SOCKET)
+    => < b(SOCKET) : BufferedSocket | bState : active, Atts > 
+       Sent(O, b(SOCKET)) .
+
+  rl [buffer-start-up] : 
+    < b(SOCKET) : BufferedSocket | bState : idle, Atts > 
+    => < b(SOCKET) : BufferedSocket | bState : active, Atts > 
+       receive(SOCKET, b(SOCKET)) .
+  
+  rl [received] : 
+    < b(SOCKET) : BufferedSocket | bState : active, read : S, Atts > 
+    received(b(SOCKET), O, DATA) 
+    => < b(SOCKET) : BufferedSocket | bState : active, read : (S + DATA), Atts > 
+       receive(SOCKET, b(SOCKET)) .
+  
+  crl [Received] : 
+    < b(SOCKET) : BufferedSocket | bState : active, read : S, Atts >  
+    Receive(b(SOCKET), O)
+    => < b(SOCKET) : BufferedSocket | bState : active, read : S', Atts >
+       Received(O, b(SOCKET), DATA)
+    if N := find(S, "#", 0) 
+       /\ DATA := substr(S, 0, N) 
+       /\ S' := substr(S, N + 1, length(S)) .
+endm
+
+*** Bit functional module 
+
+fmod BIT is
+
+	protecting STRING .
+	
+	sort Bit .
+	
+*** Initial constructor
+	ops 0 1 : -> Bit [ctor] .
+  	
+  	
+  	*** not 
+		*** Signature
+  	    op not_ : Bit -> Bit .
+		*** Equations
+  		eq not 0 = 1 .
+  		eq not 1 = 0 .
+  	
+  	*** and 
+		*** Signature
+  		op _and_ : Bit Bit -> Bit . 
+		*** Equations
+		eq 0 and 0 = 0 .
+		eq 0 and 1 = 0 .
+		eq 1 and 0 = 0 .
+		eq 1 and 1 = 1 .
+  	
+  	*** or 
+		*** Signature
+  		op _or_ : Bit Bit -> Bit . 
+		*** Equations
+  		eq 0 or 0 = 0 .
+  		eq 0 or 1 = 1 .
+  		eq 1 or 0 = 1 .
+  	  	eq 1 or 1 = 1 .	
+  	
+  	*** xor 
+		*** Signature
+  		op _xor_ : Bit Bit -> Bit  .
+		*** Equations
+  		eq 0 xor 0 = 0 . 
+  		eq 0 xor 1 = 1 .
+  		eq 1 xor 0 = 1 .
+  		eq 1 xor 1 = 0 .
+		
+  	*** bitToStr
+  		*** Signature
+  		op bitToStr_ : Bit -> String .
+  		*** Equations
+  		eq bitToStr(0) = "0" .	
+  		eq bitToStr(1) = "1" .
+  		
+  	*** strToBit
+  		*** Signature
+  		op strToBit_ : String -> Bit .
+  		*** Equations
+  		eq strToBit("0") = 0 .	
+  		eq strToBit("1") = 1 .
+  		
+ 	
+endfm
+
+view BIT from TRIV to BIT is
+	sort Elt to Bit .
+endv 
+
+
+*** Flag functional module 
+
+fmod FLAG is
+
+	sort Flag .
+	
+*** Initial constructor
+	ops Z P N C : -> Flag [ctor] .
+   	
+endfm 
+
+*** Interface functional module
+
+fmod INTERFACE is
+	protecting STRING .
+	
+		
+	
+	*** Declarations
+	
+	var  S : String .
+	
+	*** extINT
+		*** Signature
+		
+		op extINT : String -> String .
+		
+		*** Equations
+  		
+  		eq extINT(S) = substr(S,0,1) .
+  		
+	*** extDataIn
+		*** Signature   	
+		
+		op extDataIn : String -> String .
+		
+		*** Equations
+		
+		eq extDataIn(S) = substr(S,2,8) .
+	
+endfm 
+
+*** Condition functional module 
+
+fmod JUMP is
+
+	sort Jump .
+	
+*** Initial constructors
+
+	ops !J JU JZ JN JC JP JI : -> Jump [ctor] .
+
+endfm 
+
+*** Operation functional module 
+
+fmod OPERATION is
+
+	sort Operation .
+	
+*** Initial constructor
+	ops i ! & | # + . % : -> Operation [ctor] .
+  	
+  	 	
+endfm
+
+
+*** RegisterName functional module
+
+fmod REGISTERNAME is
+
+	sort RegisterName .
+
+	*** Initial constructors
+	
+	op PC SP DESP DPTR A VI TEMP CTE-1 : -> RegisterName [ctor]. 
+
+endfm
+
+*** Shift functional module 
+
+fmod SHIFT is
+
+	sort Shift .
+	
+*** Initial constructor
+
+	ops IZ DE NO : -> Shift [ctor] .
+  	
+   	
+endfm
+
+*** Upcnum functional module 
+
+fmod UPCNUM is
+
+	sort Upcnum .
+	
+*** Initial constructors
+
+	ops ui0 ui1 ui2 ui3 ui4 ui5 ui6 : -> Upcnum [ctor] .
+	
+endfm
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*** Register functional module
+
+fmod REGISTER is
+	
+	protecting STRING .
+	protecting BIT .
+	protecting MAP{Nat,BIT} .
+	protecting NAT .
+	
+	sort Register .
+	subsort Map{Nat, BIT} < Register .
+	
+	*** Initial constructor
+	
+	op reg : Map{Nat, BIT} -> Register .
+	
+	*** Declarations
+	
+	vars A B : Register .
+    var K : Map{Nat, BIT} .
+    var Q tam :	Nat .
+    var C : Bit .
+ 
+ 	
+ 	*** act 
+ 	*** State of a bit in the register
+		*** Signature
+ 		
+ 		 op act : Register Nat -> Bit .
+		
+		*** Equations
+ 		
+ 		 eq act(reg(K), Q)= K[Q] .
+	
+	*** mreg
+	*** Projects the map of a register
+		*** Signature
+		
+		op mreg : Register -> Map{Nat, BIT} .
+		
+		*** Equations
+		
+ 		eq mreg(reg(K)) = K . 
+
+
+ 	*** AND OPERATION **********************************************************
+ 	
+ 	*** andreg 
+ 	*** and between registers 
+		*** Signature
+  		
+  		op andreg : Register Register Nat  -> Register .
+		
+		*** Equations
+		
+		eq andreg(A, B, 0) = reg(insert(0, 
+										act(A,0) and act(B,0), 
+										empty)) .
+		
+		eq andreg(A, B, s(Q))= reg(insert(s(Q), 
+										  act(A, s(Q)) and act(B, s(Q)), 
+									      mreg(andreg(A,B,Q)))) .
+
+	*** andpar 
+	*** Flag modification in an and operation
+		*** Signature
+		
+	   	op andpar : Register Register Nat -> Bit .
+		
+		*** Equations
+		
+		eq andpar(A, B, 0) = act(A,0) and act(B,0) .
+		
+		eq andpar(A,B,s(Q)) = andpar(A,B,Q) xor 
+		                      not(act(A,s(Q)) and 
+							  act(B,s(Q))) .
+
+	*** andzero 
+	*** Flag modification in an and operation
+		*** Signature
+		
+		op andzero : Register Register Nat -> Bit .
+		
+		*** Equations
+		
+		eq andzero(A,B,0) = not(act(A,0) and act(B,0)) .
+		
+		eq andzero(A,B,s(Q)) = andzero(A,B,Q) and 
+							   not(act(A,s(Q)) and 
+		                       act(B,s(Q))) .
+		
+	*** andneg 
+	*** Flag modification in an and operation
+		*** Signature
+		
+		op andneg : Register Register Nat -> Bit . 
+		
+		*** Equations
+		
+		eq andneg(A,B,Q) = act(andreg(A,B,Q),Q) .
+	      
+	*** OR OPERATION ***********************************************************
+	
+	*** orreg 
+ 	*** or between registers 
+		*** Signature
+  		
+  		op orreg : Register Register Nat  -> Register .
+		
+		*** Equations
+		
+		eq orreg(A, B, 0) = reg(insert(0, 
+									   act(A,0) or act(B,0), 
+		                               empty)) .
+		
+		eq orreg(A, B, s(Q)) = reg(insert(s(Q), 
+										  act(A,s(Q)) or act(B,s(Q)), 
+								          mreg(orreg(A,B,Q)))) .
+
+	*** orzero 
+	*** Flag modification in a or operation
+		*** Signature
+		
+		op orzero : Register Register Nat -> Bit .
+		
+		*** Equations
+		
+		eq orzero(A,B,0) = not(act(A,0) or 
+						   act(B,0)) .
+		eq orzero(A,B,s(Q)) = orzero(A,B,Q) and 
+							  not(act(A,s(Q)) or 
+							  act(B,s(Q))) .
+		
+	
+	*** orpar 
+	*** Flag modification in a or operation
+		*** Signature
+		
+	   	op orpar : Register Register Nat -> Bit .
+	   	
+		*** Equations
+		
+		eq orpar(A, B, 0) = act(A,0) or act(B,0) .
+		
+		eq orpar(A,B,s(Q)) = orpar(A,B,Q) xor 
+							 not(act(A,s(Q)) or 
+							     act(B,s(Q))) .	
+	
+	*** orneg 
+	*** Flag modification in a or operation
+		*** Signature
+		
+		op orneg : Register Register Nat -> Bit .
+		 
+		*** Equations
+		
+		eq orneg(A,B,Q) = act(orreg(A,B,Q),Q) .
+
+	*** NOT OPERATION **********************************************************
+	
+	*** notreg
+	*** neges every bit in a register.
+		*** Signature
+		
+		op notreg : Register Nat -> Register .
+		
+		*** Equations
+		
+		eq notreg(B, 0) = reg(insert(0, not(act(B,0)),
+		    				  empty)) .
+		
+		eq notreg(B, s(Q)) = reg(insert(s(Q), not(act(B,s(Q))),
+		     		            mreg(notreg(B,Q)))) .
+
+
+	*** notzero
+    *** Flag modification in a not operation.
+    	*** Signature
+    	
+    	op notzero : Register Nat -> Bit .
+    	
+    	*** Equations
+    	
+    	eq notzero(B, 0) = not(act(B, 0)) .
+    	
+    	eq notzero(B, s(Q)) = not(act(B, s(Q))) and notzero(B, Q) .
+
+	*** notpar 
+	*** Flag modification in an not operation
+		*** Signature
+		
+	   	op notpar : Register Nat -> Bit .
+	   	
+		*** Equations
+		
+		eq notpar(B, 0) = act(B, 0) .
+		
+		eq notpar(B, s(Q)) = notpar(B, Q) xor act(B, s(Q)) . 
+	
+	*** notneg 
+	*** Flag modification in an not operation
+		*** Signature
+		
+	   	op notneg : Register Nat -> Bit .
+	   	
+		*** Equations
+		
+		eq notneg(B,Q) = act(notreg(B,Q),Q) .
+ 
+	*** XOR OPERATION **********************************************************
+	
+	*** xorreg 
+ 	*** xor between registers. 
+		*** Signature
+		
+  		op xorreg : Register Register Nat -> Register .
+		
+		*** Equations
+		
+		eq xorreg(A,B,0) = reg(insert(0,
+									  act(A,0) xor act(B,0),
+									  empty)) .
+		
+		eq xorreg(A,B,s(Q))= reg(insert(s(Q), 
+										act(A,s(Q)) xor act(B,s(Q)), 
+								 		mreg(xorreg(A,B,Q)))) .
+	
+
+	
+	*** xorzero 
+	*** Flag modification in a xor operation
+		*** Signature
+		
+		op xorzero : Register Register Nat -> Bit .
+		
+		*** Equations
+		
+		eq xorzero(A,B,0) = not(act(A,0) xor act(B,0)) .
+		
+		eq xorzero(A,B,s(Q))= xorzero(A,B,Q) and 
+		                      not(act(A,s(Q)) xor 
+							  act(B,s(Q))) .
+						
+		
+	*** xorpar 
+	*** Flag modification in a xor operation
+		*** Signature
+		
+	   	op xorpar : Register Register Nat -> Bit .
+	   	
+		*** Equations
+		
+	    eq xorpar(A,B,0) = not(act(A,0) xor act(B,0)) .
+	    
+	    eq xorpar(A,B,s(Q)) = xorpar(A,B,Q) xor 
+	    					  not(act(A,s(Q)) xor 
+	    					      act(B,s(Q))) .   
+	    
+	*** xorneg
+	*** Flag modification in an xor operation.
+		*** Signature
+		
+		op xorneg : Register Register Nat -> Bit . 
+		
+		*** Equations
+		
+		eq xorneg(A,B,Q) = act(xorreg(A,B,Q),Q) .
+		
+    *** ID OPERATION **********************************************************
+    
+    *** idreg
+	*** Projects a register.
+		*** Signature
+		
+		op idreg : Register -> Register .
+	
+		*** Equations
+	
+		eq idreg(B) = B .
+    
+    *** idzero
+    *** Flag modification in a projection operation.
+    	*** Signature
+    	
+    	op idzero : Register Nat -> Bit .
+    	
+    	*** Equations
+    	
+    	eq idzero(B,0) = not(act(B,0)) .
+    	
+    	eq idzero(B,s(Q)) = idzero(B,Q) and 
+    						not(act(B,s(Q))) .
+		
+
+	*** idpar 
+	*** Flag modification in a projection operation
+		*** Signature
+		
+	   	op idpar : Register Nat -> Bit .
+	   	
+		*** Equations
+		
+		eq idpar(B,0)= not(act(B,0)) .
+		
+		eq idpar(B,s(Q)) = idpar(B,Q) xor 
+						   not(act(B,s(Q))) .
+
+	*** idneg
+	*** Flag modification in a projection operation.
+		*** Signature
+		
+		op idneg : Register Nat -> Bit .
+		 
+		*** Equations
+		
+		eq idneg(B, Q) = act(idreg(B),Q) .
+		
+	*** SHL OPERATION **********************************************************
+	
+	*** shlreg 
+ 	*** Shifts one bit to the left of B 
+		*** Signature
+		
+  		op shlreg : Register Nat Nat -> Register .
+  		
+		*** Equations
+		
+		eq shlreg(B, tam, 0) = reg(insert(0, 0,
+							 	   empty)) .
+		
+		eq shlreg(B, tam, s(Q)) = reg(insert(s(Q), act(B, Q),
+								       mreg(shlreg(B, tam, Q)))) . 
+
+
+	*** shlzero 
+	*** Flag modification in a shl operation
+		*** Signature
+		
+		op shlzero : Register Nat Nat -> Bit .
+		
+		*** Equations
+  	    
+	    eq shlzero(B, tam, 0) = 1 .
+	    
+	    eq shlzero(B, tam, s(0)) = not(act(B,0) or act(B,s(0))) .
+	    
+	    ceq shlzero(B, tam, s(Q)) = shlzero(B, tam, Q) if s(Q) == tam .
+	    
+	    ceq shlzero(B, tam, s(Q)) = shlzero(B, tam, Q) and not(act(B, s(Q)))
+	    							if s(Q) < tam .
+	    	    
+	*** shlpar 
+	*** Parity flag modification in a shl operation
+		*** Signature
+		
+	   	op shlpar : Register Nat Nat -> Bit .
+	   	
+		*** Equations
+		
+	    eq shlpar(B, tam, 0) = 1 .
+	    
+	    eq shlpar(B, tam, s(0)) = not(act(B,0)) xor 
+	    						  (not(act(B,s(0))) xor 
+	    						  shlpar(B, tam, 0)) .  
+	    
+	    ceq shlpar(B, tam, s(Q)) = shlpar(B, tam, Q) if s(Q) == tam .
+	    
+	    ceq shlpar(B, tam, s(Q)) = shlpar(B, tam, Q) xor not(act(B,s(Q))) 
+	         				       if s(Q) < tam .
+	    	
+	    
+	    
+
+	*** shlneg
+	*** Flag modification in an shl operation.
+		*** Signature
+
+		op shlneg : Register Nat -> Bit . 
+
+		*** Equations
+
+		eq shlneg(B,Q) = act((shlreg(B, Q, Q)), Q) .  
+		
+	
+	*** ADD OPERATION **********************************************************
+	
+	*** addreg
+	*** Adds two registers
+		*** Signature
+		
+		op addreg : Register Register Nat -> Register .
+		
+		*** Equations
+		
+		eq addreg(A, B, 0) = reg(insert(0, act(A,0) xor act(B,0), empty)) .
+		
+		eq addreg(A, B, s(Q)) = reg(insert(s(Q), (act(A,s(Q)) xor act(B,s(Q))) 
+												  xor addcar(A, B, Q),
+									mreg(addreg(A,B,Q)))) .  
+								
+	*** addcar
+	*** Gets the carry from the add of two registers
+		*** Signature
+
+		op addcar : Register Register Nat -> Bit .
+		
+		*** Equations
+
+		eq addcar(A, B, 0) = act(A, 0) and act(B, 0) .
+		
+		ceq addcar(A, B, s(Q)) = act(A, s(Q)) and 
+							   act(B, s(Q)) if addcar(A,B,Q) == 0 .					   
+		ceq addcar(A, B, s(Q)) = act(A,s(Q)) or  
+							   act(B,s(Q)) if addcar(A,B,Q) == 1 .
+	
+	*** addzero
+	*** Tests for a zero result
+		*** Signature
+		
+		op addzero : Register Register Nat -> Bit .
+		
+		*** Equations
+		
+		eq addzero(A,B,0) = not(act(A,0) xor act(B,0)) .							  
+		
+		eq addzero(A,B,s(Q))= addzero(A,B,Q) and 
+		                      not((addcar(A,B,Q) xor act(A,s(Q))) 
+		                      	   xor act(B,s(Q))) . 
+
+	
+	
+	
+	*** addpar
+	*** Gives the parity of an addition over two registers
+		*** Signature
+		
+		op addpar : Register Register Nat -> Bit .
+		
+		*** Equations
+		
+		eq addpar(A,B,0) = not(act(A,0) xor act(B,0)) .
+		
+		eq addpar(A,B,s(Q)) = addpar(A,B,Q) xor 
+							  (act(A,s(Q)) xor 
+							  (act(B,s(Q)) xor 
+							  addcar(A,B,Q))) .  
+	
+	*** addneg
+	*** Tests if the result of an addition equals to 0
+		*** Signature
+		
+		op addneg : Register Register Nat -> Bit .
+		
+		*** Equations
+		
+		eq addneg(A,B,Q) = act(addreg(A,B,Q), Q) . 
+
+	
+	*** ONE REGISTER ***********************************************************
+	
+	*** onereg
+	*** Constant register: lsb bit = 1
+		*** Signature
+		
+		op onereg : Nat -> Register .
+		
+		*** Equations
+		
+		eq onereg(0) = reg(insert(0,
+								  1,
+								  empty)) .
+		
+		eq onereg(s(Q)) = reg(insert(s(Q),
+									 0,
+									 mreg(onereg(Q)))) .
+		
+	*** COMP OPERATION *********************************************************
+	
+	*** compreg
+	*** The complement of a register
+		*** Signature
+		
+		op compreg : Register  Nat -> Register .
+		
+		*** Equations
+				
+		eq compreg(B,Q) = addreg(notreg(B,Q),onereg(Q),Q) .
+
+		
+	*** compcar
+	*** The carry of a complement
+		*** Signature
+		
+			op compcar : Register Nat -> Bit .
+		
+		*** Equations
+		
+			eq compcar(B,Q) = addcar(onereg(Q),notreg(B,Q),Q) .
+			
+	*** compzero
+	*** Tests for a zero on the complement
+		*** Signature
+		
+			op compzero : Register Nat -> Bit .
+		*** Equations
+		
+			eq compzero(A,Q) = addzero(notreg(A,Q),onereg(Q),Q ) .
+			
+	*** comppar
+	*** The parity of a complement
+		*** Signature
+		
+			op comppar : Register Nat -> Bit .
+			
+		*** Equations
+		
+			eq comppar(A,Q) = addpar(notreg(A,Q),onereg(Q),Q) .  
+			
+	*** compneg
+	***	Tests for negive result
+		*** Signature
+		
+			op compneg : Register Nat -> Bit .
+			
+		*** Equations
+		
+			eq compneg(B,Q) = addneg(notreg(B,Q),onereg(Q),Q) . 
+	
+	*** INC OPERATION **********************************************************
+	
+	*** increg
+	*** The increment of a register by one
+		*** Signature
+		
+		op increg : Register  Nat -> Register .
+		
+		*** Equations
+				
+		eq increg(A,Q) = addreg(A,onereg(Q),Q) .
+
+		
+	*** inccar
+	*** The carry of a complement
+		*** Signature
+		
+			op inccar : Register Nat -> Bit .
+		
+		*** Equations
+		
+			eq inccar(B,Q) = addcar(onereg(Q),B,Q) .
+			
+	*** inczero
+	*** Tests for a zero on the increment
+		*** Signature
+		
+			op inczero : Register Nat -> Bit .
+		
+		*** Equations
+		
+			eq inczero(A,Q) = addzero(A, onereg(Q), Q) .
+			
+	*** incpar
+	*** The parity of an increment
+		*** Signature
+		
+			op incpar : Register Nat -> Bit .
+		
+		*** Equations
+		
+			eq incpar(A,Q) = addpar(A,onereg(Q),Q) .  
+			
+	*** incneg
+	***	Tests for negive result
+		*** Signature
+		
+			op incneg : Register Nat -> Bit .
+		
+		*** Equations
+		
+			eq incneg(B,Q) = addneg(B,onereg(Q),Q) . 	
+		
+  
+  
+  
+  
+  
+  	*** SHR OPERATION **********************************************************
+  	
+  	*** shrreg 
+ 	*** Shifts one bit to the right of B 
+		*** Signature
+		
+  		op shrreg : Register Nat Nat -> Register .
+		
+		*** Equations
+		
+		eq shrreg(B,tam,0) = reg(insert(0,act(B,s(0)),empty)) .
+		
+		ceq shrreg(B,tam,s(Q)) = reg(insert(s(Q),0,mreg(shrreg(B,tam,Q)))) 
+								 if s(Q) == tam .
+		
+		ceq shrreg(B,tam,s(Q)) = reg(insert(s(Q),act(B,s(s(Q))),
+		                             mreg(shrreg(B,tam,Q)))) 
+		                         if s(Q) < tam .
+
+	*** shrzero 
+ 	*** Activates the zero flag on right shift operation 
+		*** Signature
+		
+  		op shrzero : Register Nat -> Bit .
+		
+		*** Equations
+		
+		eq shrzero(B, s(0)) = not(act(B, s(0))) .
+		
+		eq shrzero(B,s(Q)) = not(act(B,s(Q))) and shrzero(B,Q) .	
+
+	*** shrpar
+	*** Activates the parity flag on right shift operation
+		*** Signature
+		
+		op shrpar : Register Nat -> Bit .
+		
+		*** Equations
+		
+		eq shrpar(B, 0) = not(act(B, 0)) .
+		
+		eq shrpar(B, 1) = not(act(B, 1)) .
+		
+		eq shrpar(B, s(Q)) = act(B, s(Q)) xor shrpar(B, Q) .
+		
+	*** shrneg
+	*** Deactivates the negative flag on shift right operation
+		*** Signature
+		
+		op shrneg : Register -> Bit .
+		
+		*** Equations
+		
+		eq shrneg(B) = 0 .
+		
+			*** STRING MANIPULATION
+	
+	*** Declarations
+	
+		var S : String .
+	
+	*** strToReg
+		*** Signature
+		
+		op strToReg : String Nat -> Register .
+		
+		*** Equations
+		
+		eq strToReg(S, 0) =	reg(insert(0, strToBit(S), empty) ) .
+		
+		eq strToReg(S, s(Q)) = reg(insert(s(Q), strToBit(substr(S,0,1)),
+									mreg(strToReg(substr(S,1,Q) ,Q)))) .
+							 
+		
+
+
+		
+	*** regToStr
+	
+		op regToStr : Register Nat -> String .
+		
+		*** Equations
+		
+		eq regToStr(B, 0) = bitToStr(act(B,0)) .
+		
+		eq regToStr(B, s(Q)) = bitToStr(act(B,s(Q))) + regToStr(B,Q) .		 
+		
+	
+
+endfm
+

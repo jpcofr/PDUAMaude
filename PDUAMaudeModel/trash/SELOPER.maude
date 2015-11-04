@@ -1,0 +1,10 @@
+*** SELOPER (operation selector) functional module
+
+fmod SELOPER is
+
+	sort Seloper .
+
+*** Initial constructor
+	ops & | ! !+1 + id x-| shl shr : -> Seloper [ctor] .
+
+endfm

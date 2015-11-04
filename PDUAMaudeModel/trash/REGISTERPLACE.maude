@@ -1,0 +1,16 @@
+*** Register place functional module
+
+fmod REGISTERPLACE is
+
+	sort RegisterPlace .
+	
+*** Initial constructor
+ 	
+ 	ops 1 2 3 4 5 6 7 8 : -> RegisterPlace [ctor] .
+ 	
+ 	
+endfm
+
+view REGISTERPLACE from TRIV to REGISTERPLACE is
+	sort Elt to RegisterPlace .
+endv 

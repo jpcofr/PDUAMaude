@@ -1,0 +1,12 @@
+*** OPERAND functional module
+
+fmod OPERAND is
+
+	protecting REGISTER .
+	
+	sort Operand .
+	
+*** Initial constructor
+	op operand : Register -> Operand .  	
+
+endfm

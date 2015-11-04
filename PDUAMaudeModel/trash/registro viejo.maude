@@ -1,0 +1,453 @@
+*** Register functional module
+
+fmod REGISTER is
+
+	protecting ARRAY{REGISTERPLACE, BIT} .
+	protecting REGISTERPLACE .
+	protecting CARRY .
+	protecting ZERO .
+	protecting PARITY .
+	protecting NEGATIVE .
+	
+	sort Register .
+	subsort Array{NAT, BIT} < Register .
+	
+*** Initial constructor
+	op reg : Array{REGISTERPLACE, BIT} -> Register .
+	
+	*** Declarations
+	vars A B : Register .
+    var K : Array{REGISTERPLACE, BIT} .
+    var Q : RegisterPlace .
+    var Z : Zero .
+    var C : Carry .
+    var P : Parity .
+    var N : Negative .
+     	
+ 	
+ 	*** act 
+ 	*** State of a bit in the register
+		*** Signature
+ 		 op act : Register RegisterPlace -> Bit .
+		*** Equations
+ 		 eq act(reg(K),Q) = P[Q] .
+ 		 
+ 	*** andreg 
+ 	*** and between registers 
+		*** Signature
+  		op andreg : Register Register -> Register .
+		*** Equations
+		eq andreg(A,B) = reg(
+							 insert(1,act(A,1) and act(B,1),
+	    					 insert(2,act(A,2) and act(B,2),
+	    					 insert(3,act(A,3) and act(B,3),
+	    					 insert(4,act(A,4) and act(B,4),
+	    					 insert(5,act(A,5) and act(B,5),
+	    					 insert(6,act(A,6) and act(B,6),
+	    					 insert(7,act(A,7) and act(B,7),
+	    					 insert(8,act(A,8) and act(B,8),
+	    					 empty))))))))
+    					 ) .
+    					 
+	*** andzero 
+	*** Flag modification in an and operation
+		*** Signature
+		op andzero : Register Register -> Zero .
+		*** Equations
+	    ceq andzero(A,B) = turnOnZero(Z) if 
+	    					 act(A,1) and act(B,1) == 0 /\
+					  		 act(A,2) and act(B,2) == 0 /\
+					  		 act(A,3) and act(B,3) == 0 /\
+					  		 act(A,4) and act(B,4) == 0 /\
+					         act(A,5) and act(B,5) == 0 /\
+					         act(A,6) and act(B,6) == 0 /\
+					         act(A,7) and act(B,7) == 0 /\
+					         act(A,8) and act(B,8) == 0 . 
+		eq andzero(A,B) = turnOffZero(Z) [owise] .    
+
+	*** andpar 
+	*** Flag modification in an and operation
+		*** Signature
+	   	op andpar : Register Register -> Parity .
+		*** Equations
+	    ceq andpar(A,B) = turnOnParity(P) if (
+	    					 ((act(A,1) and act(B,1)) xor
+					  		 ((act(A,2) and act(B,2)) xor 
+					  		 ((act(A,3) and act(B,3)) xor 
+					  		 ((act(A,4) and act(B,4)) xor
+					         ((act(A,5) and act(B,5)) xor 
+					         ((act(A,6) and act(B,6)) xor
+					         ((act(A,7) and act(B,7)) xor 
+					         ((act(A,8) and act(B,8))) == 0 . 
+	    eq andpar(A,B) = turnOffParity(P) [owise] . 
+	     		         
+	*** andnegat 
+	*** Flag modification in an and operation
+		*** Signature
+		op andnegat : Register Register -> Negative . 
+		*** Equations
+		ceq andnegat(A,B) = turnOnNegative(N) if (act(A,8) and act(B,8)) == 1 .
+		eq	andnegat(A,B) = turnOffNegative(N) [owise] .
+		
+
+	*** orreg 
+ 	*** or between registers 
+		*** Signature
+  		op orreg : Register Register -> Register .
+		*** Equations
+		eq orreg(A,B) = reg(
+							insert(1,act(A,1) or act(B,1),
+	    					insert(2,act(A,2) or act(B,2),
+	    					insert(3,act(A,3) or act(B,3),
+	    					insert(4,act(A,4) or act(B,4),
+	    					insert(5,act(A,5) or act(B,5),
+	    					insert(6,act(A,6) or act(B,6),
+	    					insert(7,act(A,7) or act(B,7),
+	    					insert(8,act(A,8) or act(B,8),
+	    					empty))))))))
+    					) .
+
+	*** orzero 
+	*** Flag modification in an or operation
+		*** Signature
+		op andzero : Register Register -> Zero .
+		*** Equations
+	    ceq orzero(A,B) = turnOnZero(Z) if 
+	    					 act(A,1) or act(B,1) == 0 /\
+					  		 act(A,2) or act(B,2) == 0 /\
+					  		 act(A,3) or act(B,3) == 0 /\
+					  		 act(A,4) or act(B,4) == 0 /\
+					         act(A,5) or act(B,5) == 0 /\
+					         act(A,6) or act(B,6) == 0 /\
+					         act(A,7) or act(B,7) == 0 /\
+					         act(A,8) or act(B,8) == 0 . 
+		eq orzero(A,B) = turnOffZero(Z) [owise] .
+		
+	*** orpar 
+	*** Flag modification in an or operation
+		*** Signature
+	   	op orpar : Register Register -> Parity .
+		*** Equations
+	    ceq orpar(A,B) = turnOnParity(P) if (
+	    					 ((act(A,1) or act(B,1)) xor
+					  		 ((act(A,2) or act(B,2)) xor 
+					  		 ((act(A,3) or act(B,3)) xor 
+					  		 ((act(A,4) or act(B,4)) xor
+					         ((act(A,5) or act(B,5)) xor 
+					         ((act(A,6) or act(B,6)) xor
+					         ((act(A,7) or act(B,7)) xor 
+					         ((act(A,8) or act(B,8))) == 0 . 
+	    eq orpar(A,B) = turnOffParity(P) [owise] .
+	    
+	*** ornegat
+	*** Flag modification in an or operation.
+		*** Signature
+		op ornegat: Register Register -> Negative . 
+		*** Equations
+		ceq ornegat(A,B) = turnOnNegative(N) if (act(A,8) or act(B,8)) == 1 .
+		eq	ornegat(A,B) = turnOffNegative(N) [owise] .
+		
+	*** notreg
+	*** Negates every bit in a register.
+		*** Signature
+		op notreg : Register -> Register .
+		*** Equations
+		eq notreg(B) = reg(
+							insert(1,not(act(B,1)),
+							insert(2,not(act(B,2)),
+							insert(3,not(act(B,3)),
+							insert(4,not(act(B,4)),
+							insert(5,not(act(B,5)),
+							insert(6,not(act(B,6)),
+							insert(7,not(act(B,7)),
+							insert(8,not(act(B,8)),
+							empty))))))))
+    					) .
+    *** notzero
+    *** Flag modification in a not operation.
+    	*** Signature
+    	op notzero : Register -> Zero .
+    	*** Equations
+    	ceq notzero(B) = turnOnZero(Z) if 
+	    					 not(act(B,1)) == 0 /\
+					  		 not(act(B,2)) == 0 /\
+					  		 not(act(B,3)) == 0 /\
+					  		 not(act(B,4)) == 0 /\
+					         not(act(B,5)) == 0 /\
+					         not(act(B,6)) == 0 /\
+					         not(act(B,7)) == 0 /\
+					         not(act(B,8)) == 0 . 
+		eq notzero(A,B) = turnOffZero(Z) [owise] .
+		
+	*** notpar 
+	*** Flag modification in an not operation
+		*** Signature
+	   	op notpar : Register Register -> Parity .
+		*** Equations
+	    ceq notpar(A,B) = turnOnParity(P) if (
+	    					 not(act(B,1)) xor
+					  		 not(act(B,2)) xor 
+					  		 not(act(B,3)) xor 
+					  		 not(act(B,4)) xor
+					         not(act(B,5)) xor 
+					         not(act(B,6)) xor
+					         not(act(B,7)) xor 
+					         not(act(B,8))) == 0 . 
+	    eq notpar(A,B) = turnOffParity(P) [owise] . 
+
+	*** notnegat
+	*** Flag modification in a not operation.
+		*** Signature
+		op notnegat: Register Register -> Negative . 
+		*** Equations
+		ceq notnegat(A,B) = turnOnNegative(N) if not(act(B,8)) == 1 .
+		eq	notnegat(A,B) = turnOffNegative(N) [owise] .
+		
+	*** xorreg 
+ 	*** xor between registers. 
+		*** Signature
+  		op xorreg : Register Register -> Register .
+		*** Equations
+		eq xorreg(A,B) = reg(
+							 insert(1,act(A,1) xor act(B,1),
+	    					 insert(2,act(A,2) xor act(B,2),
+	    					 insert(3,act(A,3) xor act(B,3),
+	    					 insert(4,act(A,4) xor act(B,4),
+	    					 insert(5,act(A,5) xor act(B,5),
+	    					 insert(6,act(A,6) xor act(B,6),
+	    					 insert(7,act(A,7) xor act(B,7),
+	    					 insert(8,act(A,8) xor act(B,8),
+	    					 empty))))))))
+    					 ) .
+	*** xorzero 
+	*** Flag modification in a xor operation
+		*** Signature
+		op xorzero : Register Register -> Zero .
+		*** Equations
+	    ceq xorzero(A,B) = turnOnZero(Z) if 
+	    					 act(A,1) xor act(B,1) == 0 /\
+					  		 act(A,2) xor act(B,2) == 0 /\
+					  		 act(A,3) xor act(B,3) == 0 /\
+					  		 act(A,4) xor act(B,4) == 0 /\
+					         act(A,5) xor act(B,5) == 0 /\
+					         act(A,6) xor act(B,6) == 0 /\
+					         act(A,7) xor act(B,7) == 0 /\
+					         act(A,8) xor act(B,8) == 0 . 
+		eq xorzero(A,B) = turnOffZero(Z) [owise] .    
+		
+	*** xorpar 
+	*** Flag modification in a xor operation
+		*** Signature
+	   	op xorpar : Register Register -> Parity .
+		*** Equations
+	    ceq xorpar(A,B) = turnOnParity(P) if (
+	    					 ((act(A,1) xor act(B,1)) xor
+					  		 ((act(A,2) xor act(B,2)) xor 
+					  		 ((act(A,3) xor act(B,3)) xor 
+					  		 ((act(A,4) xor act(B,4)) xor
+					         ((act(A,5) xor act(B,5)) xor 
+					         ((act(A,6) xor act(B,6)) xor
+					         ((act(A,7) xor act(B,7)) xor 
+					         ((act(A,8) xor act(B,8))) == 0 . 
+	    eq xorpar(A,B) = turnOffParity(P) [owise] .
+	    
+	*** xornegat
+	*** Flag modification in an xor operation.
+		*** Signature
+		op xornegat: Register Register -> Negative . 
+		*** Equations
+		ceq xornegat(A,B) = turnOnNegative(N) if act(A,8) xor act(B,8) == 1 .
+		eq	xornegat(A,B) = turnOffNegative(N) [owise] .
+  
+    *** idreg
+	*** Projects a register.
+		*** Signature
+		op idreg : Register -> Register .
+		*** Equations
+		eq idreg(B) = reg(
+							insert(1,act(B,1),
+							insert(2,act(B,2),
+							insert(3,act(B,3),
+							insert(4,act(B,4),
+							insert(5,act(B,5),
+							insert(6,act(B,6),
+							insert(7,act(B,7),
+							insert(8,act(B,8),
+							empty))))))))
+    					) .
+    *** idzero
+    *** Flag modification in a projection operation.
+    	*** Signature
+    	op idzero : Register -> Zero .
+    	*** Equations
+    	ceq idzero(B) = turnOnZero(Z) if 
+	    					 act(B,1) == 0 /\
+					  		 act(B,2) == 0 /\
+					  		 act(B,3) == 0 /\
+					  		 act(B,4) == 0 /\
+					         act(B,5) == 0 /\
+					         act(B,6) == 0 /\
+					         act(B,7) == 0 /\
+					         act(B,8) == 0 . 
+		eq idzero(A,B) = turnOffZero(Z) [owise] .
+		
+	*** idpar 
+	*** Flag modification in a projection operation
+		*** Signature
+	   	op idpar : Register Register -> Parity .
+		*** Equations
+	    ceq idpar(A,B) = turnOnParity(P) if (
+	    					 act(B,1) xor
+					  		 act(B,2) xor 
+					  		 act(B,3) xor 
+					  		 act(B,4) xor
+					         act(B,5) xor 
+					         act(B,6) xor
+					         act(B,7) xor 
+					         act(B,8)) == 0 . 
+	    eq idpar(A,B) = turnOffParity(P) [owise] . 
+
+	*** idnegat
+	*** Flag modification in a projection operation.
+		*** Signature
+		op idnegat: Register Register -> Negative . 
+		*** Equations
+		ceq idnegat(A,B) = turnOnNegative(N) if act(B,8) == 1 .
+		eq	idnegat(A,B) = turnOffNegative(N) [owise] .	
+
+	*** shlreg 
+ 	*** Shifts one bit to the left of B 
+		*** Signature
+  		op shlreg : Register -> Register .
+		*** Equations
+		eq shlreg(B) = reg(
+							 insert(1,act(B,2),
+	    					 insert(2,act(B,3),
+	    					 insert(3,act(B,4),
+	    					 insert(4,act(B,5),
+	    					 insert(5,act(B,6),
+	    					 insert(6,act(B,7),
+	    					 insert(7,act(B,8),
+	    					 insert(8,0,
+	    					 empty))))))))
+    					 ) .
+	*** shlzero 
+	*** Flag modification in a shl operation
+		*** Signature
+		op shlzero : Register -> Zero .
+		*** Equations
+	    ceq shlzero(B) = turnOnZero(Z) if	    					 
+					  		 act(B,2) == 0 /\
+					  		 act(B,3) == 0 /\
+					  		 act(B,4) == 0 /\
+					         act(B,5) == 0 /\
+					         act(B,6) == 0 /\
+					         act(B,7) == 0 . 
+		
+		eq shlzero(B) = turnOffZero(Z) [owise] .    
+		
+	*** shlpar 
+	*** Flag modification in a shl operation
+		*** Signature
+	   	op shlpar : Register Register -> Parity .
+		*** Equations
+	    ceq shlpar(B) = turnOnParity(P) if (
+	    					 act(B,2) xor 
+					  		 act(B,3) xor 
+					  		 act(B,4) xor
+					         act(B,5) xor 
+					         act(B,6) xor
+					         act(B,7)) == 0 . 
+					      
+	    eq shlpar(B) = turnOffParity(P) [owise] .
+	    
+	*** shlnegat
+	*** Flag modification in an shl operation.
+		*** Signature
+		op shlnegat: Register Register -> Negative . 
+		*** Equations
+		ceq shlnegat(B) = turnOffNegative(N) 
+		
+	*** shrreg 
+ 	*** Shifts one bit to the right of B 
+		*** Signature
+  		op shrreg : Register -> Register .
+		*** Equations
+		eq shrreg(B) = reg(
+							 insert(1,0,
+	    					 insert(2,act(B,1),
+	    					 insert(3,act(B,2),
+	    					 insert(4,act(B,3),
+	    					 insert(5,act(B,4),
+	    					 insert(6,act(B,5),
+	    					 insert(7,act(B,6),
+	    					 insert(8,act(B,7),
+	    					 empty))))))))
+    					 ) .
+	*** shrzero 
+	*** Flag modification in a shr operation
+		*** Signature
+		op shrzero : Register -> Zero .
+		*** Equations
+	    ceq shrzero(B) = turnOnZero(Z) if	    					 
+					  		 act(B,2) == 0 /\
+					  		 act(B,3) == 0 /\
+					  		 act(B,4) == 0 /\
+					         act(B,5) == 0 /\
+					         act(B,6) == 0 /\
+					         act(B,7) == 0 . 
+		
+		eq shrzero(B) = turnOffZero(Z) [owise] .    
+		
+	*** shrpar 
+	*** Flag modification in a shr operation
+		*** Signature
+	   	op shrpar : Register Register -> Parity .
+		*** Equations
+	    ceq shrpar(B) = turnOnParity(P) if (
+	    					 act(B,2) xor 
+					  		 act(B,3) xor 
+					  		 act(B,4) xor
+					         act(B,5) xor 
+					         act(B,6) xor
+					         act(B,7)) == 0 . 
+					      
+	    eq shrpar(B) = turnOffParity(P) [owise] .
+	    
+	*** shrnegat
+	*** Flag modification in an shr operation.
+		*** Signature
+		op shrnegat: Register Register -> Negative . 
+		*** Equations
+		ceq shrnegat(B) = turnOnNegative(N) if act(B,7) == 1 .
+		eq shrnegat(B) = turnOffNegative(N) [owise] .  		
+		
+	*** addreg
+	*** Adds the operands taking into account the actual carry
+		*** Signature
+		op addreg : Register Register Carry -> Register
+		*** Equations
+		op addreg(A,B,C) = reg(
+							 insert(1, act(A,1) xor act(B,1) xor carryState(C) ,
+	    					 insert(2, act(A,2) xor act(B,2) xor ((act(A,1) and act(B,1)) or ((act(A,1) or act(B,1)) and carryState(C))),
+	    					 insert(3, act(A,3) xor act(B,3) xor ((act(A,2) and act(B,2)) or ((act(A,2) or act(B,2)) and (act(A,1) and act(B,1)) or ((act(A,1) or act(B,1)) and carryState(C)))),
+	    					 insert(4, 
+	    					 insert(5, ,
+	    					 insert(6, ,
+	    					 insert(7, ,
+	    					 insert(8, ,
+	    					 empty))))))))
+    					 ) .
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+			     
+	      
+endfm

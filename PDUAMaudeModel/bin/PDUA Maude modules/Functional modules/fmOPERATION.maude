@@ -1,0 +1,11 @@
+*** Operation functional module 
+
+fmod OPERATION is
+
+	sort Operation .
+	
+*** Initial constructor
+	ops i ! & | # + . % : -> Operation [ctor] .
+  	
+  	 	
+endfm

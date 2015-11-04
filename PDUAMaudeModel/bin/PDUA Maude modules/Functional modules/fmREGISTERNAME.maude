@@ -1,0 +1,11 @@
+*** RegisterName functional module
+
+fmod REGISTERNAME is
+
+	sort RegisterName .
+
+	*** Initial constructors
+	
+	op PC SP DESP DPTR A VI TEMP CTE-1 : -> RegisterName [ctor]. 
+
+endfm

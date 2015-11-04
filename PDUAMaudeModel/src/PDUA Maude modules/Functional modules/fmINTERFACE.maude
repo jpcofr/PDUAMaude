@@ -1,0 +1,29 @@
+*** Interface functional module
+
+fmod INTERFACE is
+	protecting STRING .
+		
+	
+	*** Declarations
+	
+	var  S : String .
+	
+	*** extINT
+		*** Signature
+		
+		op extINT : String -> String .
+		
+		*** Equations
+  		
+  		eq extINT(S) = substr(S,0,1) .
+  		
+	*** extDataIn
+		*** Signature   	
+		
+		op extDataIn : String -> String .
+		
+		*** Equations
+		
+		eq extDataIn(S) = substr(S,2,8) .
+	
+endfm 

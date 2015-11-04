@@ -1,0 +1,31 @@
+*** Parity flag functional module
+
+fmod PARITY is
+	
+	protecting FLAG .
+	
+	sort Parity .
+	
+	subsort Flag < Parity .
+	
+*** Initial constructor
+	op parity : Flag -> Parity .
+	
+	*** Declarations
+	var F : Flag .
+	
+	*** turnOnParity
+	*** Turns on this flag
+		*** Signature
+		op turnOnParity : Parity -> Parity .
+		*** Equations 
+		eq turnOnParity(F) = parity(turnOn(F)) .
+
+		
+	*** turnOffParity
+	*** Turns off this flag
+		*** Signature
+		op turnOffParity : Parity -> Parity .
+		*** Equations 
+		eq turnOffParity(F) = parity(turnOff(F)) . 
+endfm	

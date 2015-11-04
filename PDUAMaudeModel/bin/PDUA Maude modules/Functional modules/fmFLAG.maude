@@ -1,0 +1,10 @@
+*** Flag functional module 
+
+fmod FLAG is
+
+	sort Flag .
+	
+*** Initial constructor
+	ops Z P N C : -> Flag [ctor] .
+   	
+endfm 

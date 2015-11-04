@@ -1,0 +1,24 @@
+mod PROBLEMA is
+
+	protecting REGISTERNAME .
+	protecting UPCNUM .
+	
+	including CONFIGURATION .
+		
+	*** Attribute constructors 
+	
+	op Clase	: 				->	Cid			[ctor] . 
+	op atr1 :_ 	: Upcnum 		->	Attribute	[ctor] .   
+	op atr2 :_ 	: RegisterName 	->	Attribute	[ctor] . 
+	
+	op hla 		: RegisterName	-> 	Msg			[ctor] .
+ 	*** Declarations
+		
+	***var no 	: Oid .
+	
+	
+	*** Rules
+							
+	rl [R1] : < no : Clase | atr1 : ui0, atr2 : PC > hla(SP) => < no : Clase | atr1 : ui1, atr2 : SP > .
+					
+endm

@@ -1,0 +1,66 @@
+*** Bit functional module 
+
+fmod BIT is
+
+	protecting STRING .
+	
+	sort Bit .
+	
+*** Initial constructor
+	ops 0 1 : -> Bit [ctor] .
+  	
+  	
+  	*** not 
+		*** Signature
+  	    op not_ : Bit -> Bit .
+		*** Equations
+  		eq not 0 = 1 .
+  		eq not 1 = 0 .
+  	
+  	*** and 
+		*** Signature
+  		op _and_ : Bit Bit -> Bit . 
+		*** Equations
+		eq 0 and 0 = 0 .
+		eq 0 and 1 = 0 .
+		eq 1 and 0 = 0 .
+		eq 1 and 1 = 1 .
+  	
+  	*** or 
+		*** Signature
+  		op _or_ : Bit Bit -> Bit . 
+		*** Equations
+  		eq 0 or 0 = 0 .
+  		eq 0 or 1 = 1 .
+  		eq 1 or 0 = 1 .
+  	  	eq 1 or 1 = 1 .	
+  	
+  	*** xor 
+		*** Signature
+  		op _xor_ : Bit Bit -> Bit  .
+		*** Equations
+  		eq 0 xor 0 = 0 . 
+  		eq 0 xor 1 = 1 .
+  		eq 1 xor 0 = 1 .
+  		eq 1 xor 1 = 0 .
+		
+  	*** bitToStr
+  		*** Signature
+  		op bitToStr_ : Bit -> String .
+  		*** Equations
+  		eq bitToStr(0) = "0" .	
+  		eq bitToStr(1) = "1" .
+  		
+  	*** strToBit
+  		*** Signature
+  		op strToBit_ : String -> Bit .
+  		*** Equations
+  		eq strToBit("0") = 0 .	
+  		eq strToBit("1") = 1 .
+  		
+ 	
+endfm
+
+view BIT from TRIV to BIT is
+	sort Elt to Bit .
+endv 

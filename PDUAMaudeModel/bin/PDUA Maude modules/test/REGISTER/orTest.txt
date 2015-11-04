@@ -1,0 +1,60 @@
+*** Test for or functions
+
+
+** orreg: or applied over registers
+
+first parameter	base10	second parameter	base10	expected
+1000			8		1000				8		1000
+0101			5		1010				10		1111
+1100			12		0101       			5		1101
+0101			5		0101				5		0101
+
+* Generated test strings
+
+reduce in REGISTER : orreg(reg(insert(3, 1, insert(2, 0, insert(1, 0, insert(0, 0, empty))))), reg(insert(3, 1, insert(2, 0, insert(1, 0, insert(0, 0, empty))))), 3) .
+reduce in REGISTER : orreg(reg(insert(3, 0, insert(2, 1, insert(1, 0, insert(0, 1, empty))))), reg(insert(3, 1, insert(2, 0, insert(1, 1, insert(0, 0, empty))))), 3) .
+reduce in REGISTER : orreg(reg(insert(3, 1, insert(2, 1, insert(1, 0, insert(0, 0, empty))))), reg(insert(3, 0, insert(2, 1, insert(1, 0, insert(0, 1, empty))))), 3) .
+reduce in REGISTER : orreg(reg(insert(3, 0, insert(2, 1, insert(1, 0, insert(0, 1, empty))))), reg(insert(3, 0, insert(2, 1, insert(1, 0, insert(0, 1, empty))))), 3) .
+
+** orpar: tests for parity on an or operation
+
+first parameter	base10	second parameter	base10	expected
+1000			8		1000				8		0
+0101			5		1010				10		1
+1100			12		0101       			5		0
+0101			5		0101				5		1
+
+* Generated test strings
+
+reduce in REGISTER : orpar(reg(insert(3, 1, insert(2, 0, insert(1, 0, insert(0, 0, empty))))), reg(insert(3, 1, insert(2, 0, insert(1, 0, insert(0, 0, empty))))), 3) .
+reduce in REGISTER : orpar(reg(insert(3, 0, insert(2, 1, insert(1, 0, insert(0, 1, empty))))), reg(insert(3, 1, insert(2, 0, insert(1, 1, insert(0, 0, empty))))), 3) .
+reduce in REGISTER : orpar(reg(insert(3, 1, insert(2, 1, insert(1, 0, insert(0, 0, empty))))), reg(insert(3, 0, insert(2, 1, insert(1, 0, insert(0, 1, empty))))), 3) .
+reduce in REGISTER : orpar(reg(insert(3, 0, insert(2, 1, insert(1, 0, insert(0, 1, empty))))), reg(insert(3, 0, insert(2, 1, insert(1, 0, insert(0, 1, empty))))), 3) .
+
+** orzero: tests for zero on an or operation
+
+first parameter	base10	second parameter	base10	expected
+1000			8		1000				8		0
+0101			5		1010				10		0
+0000			0		0000      			0		1
+
+* Generated test strings
+
+reduce in REGISTER : orzero(reg(insert(3, 1, insert(2, 0, insert(1, 0, insert(0, 0, empty))))), reg(insert(3, 1, insert(2, 0, insert(1, 0, insert(0, 0, empty))))), 3) .
+reduce in REGISTER : orzero(reg(insert(3, 0, insert(2, 1, insert(1, 0, insert(0, 1, empty))))), reg(insert(3, 1, insert(2, 0, insert(1, 1, insert(0, 0, empty))))), 3) .
+reduce in REGISTER : orzero(reg(insert(3, 0, insert(2, 0, insert(1, 0, insert(0, 0, empty))))), reg(insert(3, 0, insert(2, 0, insert(1, 0, insert(0, 0, empty))))), 3) .
+
+** orneg: tests for negative on an or operation
+
+first parameter	base10	second parameter	base10	expected
+1000			8		1000				8		1
+0101			5		1010				10		1
+0000			0		0000      			0		0
+
+* Generated test strings
+
+reduce in REGISTER : orneg(reg(insert(3, 1, insert(2, 0, insert(1, 0, insert(0, 0, empty))))), reg(insert(3, 1, insert(2, 0, insert(1, 0, insert(0, 0, empty))))), 3) .
+reduce in REGISTER : orneg(reg(insert(3, 0, insert(2, 1, insert(1, 0, insert(0, 1, empty))))), reg(insert(3, 1, insert(2, 0, insert(1, 1, insert(0, 0, empty))))), 3) .
+reduce in REGISTER : orneg(reg(insert(3, 0, insert(2, 0, insert(1, 0, insert(0, 0, empty))))), reg(insert(3, 0, insert(2, 0, insert(1, 0, insert(0, 0, empty))))), 3) .
+
+

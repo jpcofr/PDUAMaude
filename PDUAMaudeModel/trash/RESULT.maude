@@ -1,0 +1,11 @@
+fmod RESULT is
+
+	protecting REGISTER .
+	
+	sort Result .
+	
+*** Initial constructor
+	op res : -> Result .  	
+	
+		
+endfm

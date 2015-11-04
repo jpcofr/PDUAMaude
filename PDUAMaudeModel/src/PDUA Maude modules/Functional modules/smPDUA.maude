@@ -1,0 +1,109 @@
+*** PDUA system module 
+
+mod PDUA is
+
+	inc BUFFERED-SOCKET .
+	
+	protecting BIT .
+	protecting OPERATION .
+	protecting UPCNUM .
+	protecting SHIFT .
+	protecting REGISTER .
+	protecting JUMP .
+	protecting FLAG .
+	protecting REGISTERNAME .
+	protecting INTERFACE .
+		
+	
+	
+		
+	*** IP: 	localhost
+	*** Port:	7200	
+	
+	*** Object declarations	
+	
+	op PduaClass : -> Cid .
+	
+	op pdua : -> Oid .
+	 
+	
+	*** Attribute constructors 
+	
+	op uins:[UINS?_][OPERANDO?_][OPERACION?_][DESTINO?_][CONDICION?_][SIGINS?_][DESP?_][HF?_][HR?_][MAR?_][MDR?_][RW?_][IOM?_][HRI?_][RUPC?_] : Upcnum RegisterName Operation RegisterName Jump Upcnum Shift Bit Bit Bit Bit Bit Bit Bit Bit -> Attribute [ctor] . 
+	
+	op uc:[INSH?_][UPC?_][RST?_][IOM?_][RW?_][INTER?_][JEV?_] : Register Upcnum Bit Bit Bit  Bit Jump -> Attribute [ctor] .
+	
+	op alu:[HF?_][SELOP?_][C?_][N?_][P?_][Z?_][OUTPUT?_] : Bit Operation Bit Bit Bit Bit Register -> Attribute [ctor] .
+	
+	op banco:[HR?_][PC?_][SP?_][DPTR?_][A?_][VI?_][TEMP?_][CTE-1?_][ACC?_] : Bit Register Register Register Register Register Register Register Register -> Attribute [ctor] .
+	
+	op mar:[HABILITADO?_][DIRECCION?_] : Bit Register -> Attribute [ctor] .
+	
+	op mdr:[HABILITADO?_][DATAIN?_][DATAOUT?_] : Bit Register Register -> Attribute [ctor] .
+	
+	*** Declarations
+	
+	
+	vars dumReg00 dumReg01 dumReg02 dumReg03 dumReg04 dumReg05 dumReg06 dumReg07 dumReg08 dumReg09 dumReg10 dumReg11 dumReg12 dumReg13 :  Register . *** dummy registers
+	
+	var dumRegNam00 : RegisterName . *** dummy register names
+	
+	var dumOp00 : Operation . *** dummy register operations
+	
+	vars dumBit00 dumBit01 dumBit02 dumBit03 dumBit04 dumBit05 dumBit06 dumBit07 dumBit08 dumBit09 dumBit10 dumBit11 : Bit .  *** dummy bits
+	
+	var dumJEV00 : Jump . *** dummy jump constants
+	
+	var dumUI00 : Upcnum . *** dummy microinstruction numbers
+	
+	
+	vars D S : String . *** D is the string for data reception; S is any string
+
+	var T SN : Oid .  *** SN is socket's name; T is pdua's object name 
+
+	*** Rules
+	
+	*** FETCH
+	
+	op powerOn : -> Configuration .
+	
+	*** eq powerOn = 
+	
+		*** uInstruction 0
+		
+		***rl [FE1a] : < T : PduaClass | uins:[UINS?(ui0)][OPERANDO?(PC)][OPERACION?(i)][DESTINO?(ui0)][CONDICION?(JU)][SIGINS?(ui0)][DESP?(IZ)][HF?(0)][HR?(0)][MAR?(0)][MDR?(0)][RW?(0)][IOM?(0)][HRI?(0)][RUPC?(0)], uc:[INSH?(dumReg00)][UPC?(ui0)][RST?(0)][IOM?(0)][RW?(0)][INTER?(0)][JEV?(JU)], alu:[HF?(0)][SELOP?(i)][C?(0)][N?(0)][P?(0)][Z?(0)][OUTPUT?(dumReg00)], banco:[HR?(dumReg00)][PC?(dumReg00)][SP?(dumReg00)][DPTR?(dumReg00)][A?(dumReg00)][VI?(dumReg00)][TEMP?(dumReg00)][CTE-1?(dumReg00)][ACC?(dumReg00)], mar:[HABILITADO?(0)][DIRECCION?(dumReg00)], mdr:[HABILITADO?(0)][DATAIN?(dumReg00)][DATAOUT?(dumReg00)] >
+			***		=> CreateClientTcpSocket(socketManager, T, "localhost", 7200) < T : PduaClass | uins:[UINS?(ui0)][OPERANDO?(PC)][OPERACION?(i)][DESTINO?(ui0)][CONDICION?(JU)][SIGINS?(ui0)][DESP?(IZ)][HF?(0)][HR?(0)][MAR?(0)][MDR?(0)][RW?(0)][IOM?(0)][HRI?(0)][RUPC?(0)], uc:[INSH?(dumReg00)][UPC?(ui0)][RST?(0)][IOM?(0)][RW?(0)][INTER?(0)][JEV?(JU)], alu:[HF?(0)][SELOP?(i)][C?(0)][N?(0)][P?(0)][Z?(0)][OUTPUT?(dumReg00)], banco:[HR?(dumReg00)][PC?(dumReg00)][SP?(dumReg00)][DPTR?(dumReg00)][A?(dumReg00)][VI?(dumReg00)][TEMP?(dumReg00)][CTE-1?(dumReg00)][ACC?(dumReg00)], mar:[HABILITADO?(0)][DIRECCION?(dumReg00)], mdr:[HABILITADO?(0)][DATAIN?(dumReg00)][DATAOUT?(dumReg00)] > .
+		rl [FE1a ] : < T : PduaClass | uins:[UINS? ui0 ][OPERANDO? PC ][OPERACION? i ][DESTINO? ui0 ][CONDICION? JU ][SIGINS? ui0 ][DESP? IZ ][HF? 0 ][HR? 0 ][MAR? 0 ][MDR? 0 ][RW? 0 ][IOM? 0 ][HRI? 0 ][RUPC? 0 ], uc:[INSH? dumReg00 ][UPC? ui0 ][RST? 0 ][IOM? 0 ][RW? 0 ][INTER? 0 ][JEV? JU ], alu:[HF? 0 ][SELOP? i ][C? 0 ][N? 0 ][P? 0 ][Z? 0 ][OUTPUT? dumReg00 ], banco:[HR? dumReg00 ][PC? dumReg00 ][SP? dumReg00 ][DPTR? dumReg00 ][A? dumReg00 ][VI? dumReg00 ][TEMP? dumReg00 ][CTE-1? dumReg00 ][ACC? dumReg00 ], mar:[HABILITADO? 0 ][DIRECCION? dumReg00 ], mdr:[HABILITADO? 0 ][DATAIN? dumReg00 ][DATAOUT? dumReg00 ] >
+				=> CreateClientTcpSocket(socketManager, T, "localhost", 7200) < T : PduaClass | uins:[UINS? ui0 ][OPERANDO? PC ][OPERACION? i ][DESTINO? ui0 ][CONDICION? JU ][SIGINS? ui0 ][DESP? IZ ][HF? 0 ][HR? 0 ][MAR? 0 ][MDR? 0 ][RW? 0 ][IOM? 0 ][HRI? 0 ][RUPC? 0 ], uc:[INSH? dumReg00 ][UPC? ui0 ][RST? 0 ][IOM? 0 ][RW? 0 ][INTER? 0 ][JEV? JU ], alu:[HF? 0 ][SELOP? i ][C? 0 ][N? 0 ][P? 0 ][Z? 0 ][OUTPUT? dumReg00 ], banco:[HR? dumReg00 ][PC? dumReg00 ][SP? dumReg00 ][DPTR? dumReg00 ][A? dumReg00 ][VI? dumReg00 ][TEMP? dumReg00 ][CTE-1? dumReg00 ][ACC? dumReg00 ], mar:[HABILITADO? 0 ][DIRECCION? dumReg00 ], mdr:[HABILITADO? 0 ][DATAIN? dumReg00 ][DATAOUT? dumReg00 ] > .
+					
+					
+		   
+		
+		***rl [FE1b] : CreatedSocket(T, socketManager, SN) 
+		 			***	=> Receive(SN, T) 
+		 
+		***rl [FE1c] 		: Received(T, SN, D)
+		 	***			=> CloseSocket(SN, T) 
+		 
+		***rl [FE1dnoJI] 	: ClosedSocket(T, SN, S) 
+	   		***			=>
+	   					
+	   					
+		   
+		***rl [FE1dsiJI] 	:ClosedSocket(T, SN, S) 
+		   ***				=> 
+		   				
+		
+		
+		
+		*** uInstruction 1
+	
+	
+	
+	
+	
+	
+	
+
+	
+endm

@@ -1,0 +1,12 @@
+*** Shift functional module 
+
+fmod SHIFT is
+
+	sort Shift .
+	
+*** Initial constructor
+
+	ops IZ DE NO : -> Shift [ctor] .
+  	
+   	
+endfm

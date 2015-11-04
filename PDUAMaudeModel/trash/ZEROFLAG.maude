@@ -1,0 +1,31 @@
+*** zero flag functional module
+
+fmod ZEROFLAG is
+	protecting FLAG .
+	
+	sort ZeroFlag .
+		
+	subsort Flag < ZeroFlag .
+	
+*** Initial constructor
+	op zero : Flag -> ZeroFlag .
+
+	*** Declarations
+	var F : Flag .
+	
+	*** turnOnZero
+	*** Turns on this flag.
+		*** Signature
+		op turnOnZero : ZeroFlag -> ZeroFlag .
+		*** Equations 
+		eq  turnOnZero(zero(F)) = zero(turnOn(F)) .
+		
+	*** turnOffZero
+	*** Turns off this flag.
+		*** Signature
+		op turnOffZero : ZeroFlag -> ZeroFlag .
+		*** Equations 
+		eq turnOffZero(zero(F)) = zero(turnOff(F)) .  	  	
+
+		
+endfm	

@@ -1,0 +1,37 @@
+*** Carry flag functional module
+
+fmod CARRY is
+	protecting FLAG .
+	
+	sort Carry .
+	
+	subsort Flag < Carry .
+	
+*** Initial constructor
+	op carry : Flag -> Carry .
+	
+	*** Declarations
+	var F : Flag .
+	
+	*** turnOnCarry
+	*** Turns on this flag
+		*** Signature
+		op turnOnCarry : Carry -> Carry .
+		*** Equations 
+		eq turnOnCarry(F) = carry(turnOn(F)) .
+
+		
+	*** turnOffCarry
+	*** Turns off this flag
+		*** Signature
+		op turnOffCarry : Carry -> Carry .
+		*** Equations 
+		eq turnOffCarry(F) = carry(turnOff(F)) .
+		
+	*** carryState
+	*** 1 if the carry flag is on, 0 otherwise
+		*** Signature
+		op carryState : Carry -> Bit .
+		*** Equations
+		eq carryState(carry(F)) = state(F) . 
+endfm	

@@ -1,0 +1,37 @@
+*** Flag functional module
+
+fmod FLAG is
+
+	protecting BIT .
+	
+	sort Flag .
+	
+	subsort Bit < Flag .
+	
+*** Initial constructor
+	op flag : Bit -> Flag .
+	
+	*** on
+	*** Turns on the flag
+		*** Signature
+		op turnOn : Flag -> Flag .
+		*** Equations
+		eq turnOn(flag(0)) = flag(1) .
+		eq turnOn(flag(1)) = flag(1) .  	
+	
+	*** off
+	*** Turns off the flag
+		*** Signature
+		op turnOff : Flag -> Flag .
+		*** Equations
+		eq turnOff(flag(1)) = flag(0) .
+		eq turnOff(flag(0)) = flag(0) .
+	
+	*** state
+	*** Gives the state of a flag
+		*** Signature
+		op state : Flag -> Bit .
+		*** Equations
+		eq flag(1) = 1 .
+		eq flag(0) = 0 .
+endfm	

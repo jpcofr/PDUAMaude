@@ -1,0 +1,12 @@
+*** Upcnum functional module 
+
+fmod UPCNUM is
+
+	sort Upcnum .
+	
+*** Initial constructors
+
+	ops ui0 ui1 ui2 ui3 ui4 ui5 ui6 ui7 : -> Upcnum [ctor] .
+	
+	
+endfm
